@@ -1,0 +1,64 @@
+name: Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Make Gradlew Executable
+        run: chmod +x gradlew
+
+      - name: Build Plugin Jar
+        run: ./gradlew pluginJar
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: HybridAC-Plugin
+          path: build/libs/*.jar
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: HybridAC v1.0.0
+          draft: false
+          prerelease: false
+          make_latest: true
+          body: |
+            ## HybridAC v1.0.0 (Production Build)
+
+            Готовый скомпилированный плагин HybridAC для серверов Minecraft (Paper / Purpur / Spigot 1.16.5–1.21.x).
+
+            ### Как установить:
+            1. Скачайте файл **`hybridac-plugin-1.0.0.jar`** ниже в блоке **Assets**.
+            2. Поместите его в папку `plugins/` вашего сервера.
+            3. Убедитесь, что установлен [ProtocolLib](https://www.spigotmc.org/resources/protocollib.1997/).
+            4. Запустите сервер, выполните `/hac auth <код-из-кабинета>` для привязки к сайту.
+          files: build/libs/*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

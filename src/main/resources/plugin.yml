@@ -1,0 +1,32 @@
+name: HybridAC
+version: ${project.version}
+main: com.hybridac.HybridACPlugin
+api-version: "1.16"
+folia-supported: true
+softdepend:
+  - ProtocolLib
+  - PlaceholderAPI
+commands:
+  hybridac:
+    usage: /hybridac help
+    permission: hybridac.admin
+    aliases: [hac]
+permissions:
+  hybridac.admin:
+    default: op
+  hybridac.reload:
+    default: op
+  hybridac.alerts:
+    default: op
+  hybridac.suspicious:
+    default: op
+  hybridac.suspicious.alerts:
+    default: op
+  hybridac.suspicious.list:
+    default: op
+  hybridac.suspicious.top:
+    default: op
+  hybridac.suspicious.flagged:
+    default: op
+  hybridac.menu:
+    default: op

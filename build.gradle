@@ -1,0 +1,98 @@
+plugins {
+    id 'java'
+}
+
+group = providers.gradleProperty('group').get()
+version = providers.gradleProperty('version').get()
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+    maven {
+        url = 'https://repo.dmulloy2.net/repository/public/'
+    }
+    maven {
+        url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
+}
+
+configurations {
+    shade
+    implementation.extendsFrom(shade)
+}
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+    compileOnly 'net.dmulloy2:ProtocolLib:5.4.0'
+    compileOnly 'me.clip:placeholderapi:2.11.6'
+
+    shade 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    shade 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2'
+    shade 'org.xerial:sqlite-jdbc:3.46.0.1'
+    shade 'com.zaxxer:HikariCP:5.1.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+tasks.processResources {
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand(project.properties)
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+tasks.jar {
+    enabled = false
+}
+
+tasks.register('pluginJar', Jar) {
+    group = 'build'
+    description = 'Builds a self-contained HybridAC plugin jar.'
+    archiveBaseName = 'hybridac-plugin'
+    archiveVersion = project.version.toString()
+    destinationDirectory = file("$buildDir/libs")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    manifest {
+        attributes(
+                'Implementation-Title': 'HybridAC Plugin',
+                'Implementation-Version': project.version
+        )
+    }
+
+    from sourceSets.main.output
+    dependsOn configurations.runtimeClasspath
+    from {
+        configurations.runtimeClasspath.collect { dependency ->
+            dependency.isDirectory() ? dependency : zipTree(dependency)
+        }
+    }
+
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.assemble {
+    dependsOn tasks.named('pluginJar')
+}
+
+tasks.build {
+    dependsOn tasks.named('pluginJar')
+}
