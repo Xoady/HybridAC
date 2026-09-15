@@ -1,0 +1,128 @@
+# Язык сообщений: ru (Русский) или en (English)
+# Файлы локализации: plugins/HybridAC/messages/ (ru.yml, en.yml)
+language: "ru"
+
+# Включает античит целиком
+plugin:
+  enabled: true
+  # Включает технический дебаг в логах
+  debug: false
+  # Порог подробного внутреннего вердикта
+  verbose-threshold: 0.65
+  # Список миров где античит разрешен (пусто = везде)
+  allowed-worlds: []
+  # Список миров где античит запрещен
+  blocked-worlds: []
+
+alerts:
+  preview-threshold: 0.18
+  silent-mode: false
+  yellow-threshold: 40
+  red-threshold: 70
+
+checks: {}
+
+buffers:
+  # Скорость спада итоговой уверенности (в секунду)
+  hybrid-decay-per-second: 0.08
+  # Размер окна ударов для ML инференса
+  window-size: 40
+  # Минимальное число сигналов для серьезного вердикта
+  minimum-evidence-count: 4
+
+hybrid:
+  # Порог алерта модераторам для сглаженной уверенности ML (0.75 = 75%)
+  alert-threshold: 0.75
+  # Порог применения наказаний (0.90 = 90%)
+  punish-threshold: 0.90
+  # Защита от дребезга вердикта (гистерезис)
+  hysteresis: 0.05
+  # Минимальный размер окна ударов для формирования ML вердикта
+  minimum-hit-window: 20
+  # Сила сглаживания уверенности (Exponential Moving Average, 0.35 = 35% нового вердикта, 65% истории)
+  smoothing-factor: 0.35
+
+ml:
+  # Включает интеграцию с Python ML сервисом (true/false)
+  enabled: true
+  # Адрес Gateway/ML сервиса
+  base-url: "https://hybridac.ru"
+  # Авторизация сервера:
+  # Для быстрой привязки сгенерируйте код в панели на сайте и выполните:
+  #   /hybridac auth <пароль/код>
+  # Токен авторизации автоматически сохранится в plugins/HybridAC/storage/credentials.json
+  # (Ручное заполнение api-key ниже больше не требуется, но поддерживается)
+  api-key: ""
+  # Выбранная модель нейросети: standard, plus, ultra (или название вашей кастомной модели)
+  model: "standard"
+  # Проверять доступность модели вашему тарифному плану
+  enforce-plan-model: true
+
+storage:
+  # Путь к SQLite базе
+  sqlite-path: "plugins/HybridAC/hybridac.db"
+  # Папка для JSONL датасетов
+  dataset-directory: "plugins/HybridAC/datasets"
+  # Папка для session summary файлов
+  session-directory: "plugins/HybridAC/sessions"
+
+punishment:
+  # Если true, то любые санкции только алертят в чат, но не применяются
+  alert-only: false
+  # Минимальный интервал между крупными санкциями (в секундах)
+  minimum-punish-interval-seconds: 30
+  # Системы наказаний по типам детекта
+  detections:
+    # ML детекция работает по сглаженному проценту от нейросети
+    ml:
+      mode: "PERCENT"
+      session-window-seconds: 10
+      thresholds:
+        - threshold: 75
+          actions:
+            - type: "REDUCE_DAMAGE"
+              multiplier: 0.45
+              duration-seconds: 15
+            - type: "FREEZE"
+              duration-seconds: 2
+        - threshold: 90
+          actions:
+            - type: "COMMAND"
+              commands:
+                - "kick %player% HybridAC Cheat Detected (%progress%%%)"
+            - type: "INCREASE_DAMAGE"
+              multiplier: 1.50
+              duration-seconds: 30
+            - type: "ARMOR_BREAK"
+              multiplier: 50.0
+              duration-seconds: 30
+
+    sprint_reset:
+      mode: "VL"
+      session-window-seconds: 60
+      thresholds:
+        - threshold: 4
+          actions:
+            - type: "FREEZE"
+              duration-seconds: 2
+        - threshold: 8
+          actions:
+            - type: "COMMAND"
+              commands:
+                - "kick %player% HybridAC AutoSprint/Macro %progress%/%threshold%"
+
+menu:
+  title: "&#ff8cc6Подозрительные Игроки"
+  size: 54
+  min-probability: 0.60
+  items:
+    player-head:
+      material: "PLAYER_HEAD"
+      name: "&#ff5974%player%"
+      lore:
+        - "&7Сглаженная вероятность читов: &c%probability%%"
+        - "&eКликни, чтобы телепортироваться"
+    border-item:
+      material: "BLACK_STAINED_GLASS_PANE"
+      name: " "
+      slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 45, 46, 47, 48, 49, 50, 51, 52, 53]
